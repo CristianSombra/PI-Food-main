@@ -1,10 +1,11 @@
 const { Recipe, Diet } = require("../db");
+const { Op } = require("sequelize");
 
 // GET /recipes/:idRecipe
 const getRecipeById = async (req, res) => {
-  const { idRecipe } = req.params;
+  const { id } = req.params;
   try {
-    const recipe = await Recipe.findByPk(idRecipe, { include: Diet });
+    const recipe = await Recipe.findByPk(id, { include: Diet });
     if (recipe) {
       res.json(recipe);
     } else {

@@ -10,7 +10,7 @@ const { getDiets } = require('../controllers/diet');
 
 const router = Router();
 
-router.get('/recipes/:idRecipe', getRecipeById);
+router.get('/recipes/:id', getRecipeById);
 router.get('/recipes/name', getRecipesByName);
 router.post('/recipes', createRecipe);
 router.get('/diets', getDiets);
