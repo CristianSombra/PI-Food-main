@@ -29,10 +29,9 @@ module.exports = (sequelize) => {
     steps: {
       type: DataTypes.TEXT,
       allowNull: false
-    },
+    }
   },
   {
   timestamps: false,
-  }
-  );
+  });
 };
