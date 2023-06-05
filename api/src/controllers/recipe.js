@@ -7,7 +7,7 @@ const axios = require("axios");
 const getRecipeById = async (req, res) => {
   const { id } = req.params;
 
-  const URL = `http://api.spoonacular.com/recipes/${id}/information?apiKey=${API_KEY}`;
+  const URL = `https://api.spoonacular.com/recipes/${id}/information?apiKey=${API_KEY}`;
   try {
     const response = await axios.get(URL);
     if (response.data) {

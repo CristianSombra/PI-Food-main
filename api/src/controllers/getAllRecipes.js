@@ -12,4 +12,4 @@ const getAllRecipes = async (req, res) => {
     }
   };
 
-  module.exports = getAllRecipes;
+  module.exports = { getAllRecipes };

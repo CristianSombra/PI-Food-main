@@ -1,4 +1,5 @@
 const { Diet } = require("../db");
+const { API_KEY } = process.env;
 const axios = require('axios');
 
 // GET /diets
