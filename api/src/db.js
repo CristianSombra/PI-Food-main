@@ -1,7 +1,5 @@
 require('dotenv').config();
 const { Sequelize } = require('sequelize');
-const DietModel = require('./models/Diet');
-const RecipeModel = require('./models/Recipe');
 const fs = require('fs');
 const path = require('path');
 const {
@@ -15,9 +13,6 @@ const sequelize = new Sequelize(`postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}
 const basename = path.basename(__filename);
 
 const modelDefiners = [];
-
-modelDefiners.push(DietModel);
-modelDefiners.push(RecipeModel);
 
 // Leemos todos los archivos de la carpeta Models, los requerimos y agregamos al arreglo modelDefiners
 fs.readdirSync(path.join(__dirname, '/models'))

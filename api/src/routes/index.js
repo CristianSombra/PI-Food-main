@@ -1,6 +1,8 @@
 const { Router } = require('express');
 const { getRecipeById, getRecipesByName, createRecipe } = require('../controllers/recipe');
+const { getAllRecipes } = require('../controllers/getAllRecipes');
 const { getDiets } = require('../controllers/diet');
+
 
 
 // Importar todos los routers;
@@ -8,8 +10,10 @@ const { getDiets } = require('../controllers/diet');
 
 
 
+
 const router = Router();
 
+router.get('/', getAllRecipes);
 router.get('/recipes/:id', getRecipeById);
 router.get('/recipes/name', getRecipesByName);
 router.post('/recipes', createRecipe);
