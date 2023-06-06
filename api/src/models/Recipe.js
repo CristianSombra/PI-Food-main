@@ -7,8 +7,9 @@ module.exports = (sequelize) => {
   sequelize.define('recipe', {
     id: {
       type: DataTypes.UUID,
-      primaryKey: true,
       defaultValue: () => uuidv4(),
+      allowNull: false,
+      primaryKey: true
     },
     name: {
       type: DataTypes.STRING,

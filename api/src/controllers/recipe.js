@@ -1,35 +1,35 @@
+require('dotenv').config();
+const { API_KEY } = process.env;
 const { Recipe } = require("../db");
 const { Op } = require("sequelize");
-const { API_KEY } = process.env;
 const axios = require("axios");
 
 // GET /recipes/:idRecipe
 const getRecipeById = async (req, res) => {
   const { id } = req.params;
-
-  const URL = `https://api.spoonacular.com/recipes/${id}/information?apiKey=${API_KEY}`;
+  
   try {
-    const response = await axios.get(URL);
-    if (response.data) {
-      const { id, title, image, summary, healthScore, analyzedInstructions } = response.data;
+    const response = await axios.get(`https://api.spoonacular.com/recipes/${id}/information?apiKey=${API_KEY}`);
+    const recipeData = response.data;
 
-      const recipe = {
-        id,
-        name: title,
-        image,
-        summary,
-        healthScore,
-        steps: analyzedInstructions.map((instruction) => instruction.step),
-      };
+    const { id, title: name, image, summary, healthScore, analyzedInstructions: [{ steps }] = [] } = recipeData;
 
-      res.json(recipe);
-    } else {
-      res.status(404).json({ message: "Recipe not found" });
-    }
+    const infoURL = {
+      id,
+      name,
+      image,
+      summary,
+      healthScore,
+      steps: steps || []
+    };
+
+    res.json(infoURL);
   } catch (error) {
-    res.status(500).json({ message: "Internal server error" });
+    console.error(error);
+    res.status(500).json({ error: 'Ha ocurrido un error al obtener la receta.' });
   }
 };
+
 
 // GET /recipes/name?="..."
 const getRecipesByName = async (req, res) => {
