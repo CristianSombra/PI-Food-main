@@ -1,3 +1,4 @@
+require('dotenv').config();
 const { Diet } = require("../db");
 const { API_KEY } = process.env;
 const axios = require('axios');
@@ -11,7 +12,7 @@ const getDiets = async (req, res) => {
     });
 
     if (created) {
-      const response = await axios.get(`https://api.spoonacular.com/recipes/complexSearch?apiKey=${API_KEY}&addRecipeInformation=true`);
+      const response = await axios.get(`https://api.spoonacular.com/recipes/complexSearch?apiKey=${API_KEY}`);
       const { diets: apiDiets } = response.data;
 
       // Crear registros de dietas adicionales

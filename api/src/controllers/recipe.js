@@ -6,24 +6,22 @@ const axios = require("axios");
 
 // GET /recipes/:idRecipe
 const getRecipeById = async (req, res) => {
-  const { id } = req.params;
-  
+  const { idRecipe } = req.params;
+  const URL = `https://api.spoonacular.com/recipes/${idRecipe}/information?apiKey=${API_KEY}`;
+  console.log('URL:', URL)
   try {
-    const response = await axios.get(`https://api.spoonacular.com/recipes/${id}/information?apiKey=${API_KEY}`);
-    const recipeData = response.data;
+    const response = await axios.get(URL);
+    const recipe = response.data;
 
-    const { id, title: name, image, summary, healthScore, analyzedInstructions: [{ steps }] = [] } = recipeData;
-
-    const infoURL = {
-      id,
-      name,
-      image,
-      summary,
-      healthScore,
-      steps: steps || []
+    const recipeData = {
+      id: recipe.id,
+      name: recipe.name,
+      image: recipe.image,
+      summary: recipe.summary,
+      healthScore: recipe.healthScore
     };
 
-    res.json(infoURL);
+    res.status(200).json(recipeData);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Ha ocurrido un error al obtener la receta.' });
