@@ -1,6 +1,6 @@
 const { Router } = require('express');
-const { getRecipeById, getRecipesByName, createRecipe } = require('../controllers/recipe');
-const { getDiets } = require('../controllers/diet');
+const recipesRouter = require('../routes/internalRoutes/recipes');
+
 
 
 
@@ -9,10 +9,11 @@ const { getDiets } = require('../controllers/diet');
 
 const router = Router();
 
-router.get('/recipes/:idRecipe', getRecipeById);
-router.get('/recipes/name', getRecipesByName);
-router.post('/recipes', createRecipe);
-router.get('/diets', getDiets);
+router.use('/recipes', recipesRouter);
+
+
+// router.post('/recipes', createRecipe);
+// router.get('/diets', getDiets);
 
 
 // Configurar los routers
