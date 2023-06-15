@@ -1,75 +1,132 @@
 require('dotenv').config();
-const axios = require("axios");
-const { Diet, Recipe } = require("../db.js");
+const { Recipe, Diet } = require('../db.js');
+const axios = require('axios');
 const { API_KEY } = process.env;
 
+function getRecipeByName(req, res, next) {
+	const nameQuery = req.query.name;
+	var remoteRecipes = [];
+	var localRecipes = [];
+	if (nameQuery) {
+	  axios
+		.get(
+		  `https://api.spoonacular.com/recipes/complexSearch?apiKey=${API_KEY}&addRecipeInformation=true&query=${nameQuery}&number=100`
+		)
+		.then((apiResponse) => {
+		  remoteRecipes = apiResponse.data.results.filter((recipe) => {
+			return recipe.title.toLowerCase().includes(nameQuery);
+		  }).map((recipe) => {
+			return {
+			  id: recipe.id,
+			  name: recipe.title,
+			  image: recipe.image,
+			  summary: recipe.summary,
+			  healthScore: recipe.healthScore,
+			  steps: recipe.analyzedInstructions[0]?.steps.map(step => step.step),
+			};
+		  });
+		  return Recipe.findAll({ include: [Diet] });
+		})
+		.then((localResponse) => {
+		  localRecipes = localResponse.filter((recipe) => {
+			return recipe.title.toLowerCase().includes(nameQuery);
+		  }).map((recipe) => {
+			return {
+			  id: recipe.id,
+			  name: recipe.title,
+			  image: recipe.image,
+			  summary: recipe.summary,
+			  healthScore: recipe.healthScore,
+			  steps: recipe.steps
+			};
+		  });
+		  return res.json([...localRecipes, ...remoteRecipes].slice(0, 9));
+		})
+		.catch((error) => next(error));
+	} else {
+	  axios
+		.get(
+		  `https://api.spoonacular.com/recipes/complexSearch?apiKey=${API_KEY}&addRecipeInformation=true&number=100`
+		)
+		.then((apiResponse) => {
+		  remoteRecipes = apiResponse.data.results.map((recipe) => {
+			return {
+			  id: recipe.id,
+			  name: recipe.title,
+			  image: recipe.image,
+			  summary: recipe.summary,
+			  healthScore: recipe.healthScore,
+			  steps: recipe.analyzedInstructions[0]?.steps.map(step => step.step),
+			};
+		  });
+		  return Recipe.findAll({ include: [Diet] });
+		})
+		.then((localResponse) => {
+		  localRecipes = localResponse.map((recipe) => {
+			return {
+			  id: recipe.id,
+			  name: recipe.title,
+			  image: recipe.image,
+			  summary: recipe.summary,
+			  healthScore: recipe.healthScore,
+			  steps: recipe.steps
+			};
+		  });
+		  return res.json([...localRecipes, ...remoteRecipes]);
+		})
+		.catch((error) => next(error));
+	}
+  }
 
-//TRAIGO LOS DATOS DE LA API Y LO DEVUELVO EN EN UN OBJETO JSON
-const getApiInfo = async () => {
-  const res = await axios.get(`https://api.spoonacular.com/recipes/complexSearch?apiKey=${API_KEY}&addRecipeInformation=true&number=100`);
-  const apiInfo = await res.data.results.map(recipe => {
-    return {
-      id: recipe.id,
-      name: recipe.title,
-      image: recipe.image,
-      summary: recipe.summary,
-      healthScore: recipe.healthScore,
-      steps: recipe.analyzedInstructions[0]?.steps.map(step => step.step),
-      diets: recipe.diets.map(diet => diet[0].toUpperCase() + diet.slice(1)).join(', '),
-    }
-  })
-  return apiInfo
+function getRecipeById(req, res, next) {
+	const id = req.params.idReceta;
+	if (id.includes('-')) {
+		Recipe.findByPk(id, { include: Diet }).then((recipe) => {
+			return res.json(recipe);
+		});
+	} else {
+		axios
+			.get(`https://api.spoonacular.com/recipes/${id}/information?apiKey=${API_KEY}`)
+			.then((response) => {
+				return res.json({
+					id: response.data.id,
+					name: response.data.title,
+					image: response.data.image,
+					summary: response.data.summary,
+					healthScore: response.data.healthScore,
+					steps: response.data.instructions,
+				});
+			})
+			.catch((error) => next(error));
+	}
 }
 
-
-//TRAIGO TODOS LAS RECIPES CREADOS DESDE LA BASE DE DATOS EN LA TABLA recipe, Y QUE INCLUYA LA TABLA diets CON SU ATRIBUTO NAME
-const getDBInfo = async () => {
-  const recipe = await Recipe.findAll({
-     include: {
-         model: Diet,
-         attributes: ['name'],
-         through: {
-             attributes: [],
-         }, 
-     }
- })
-
- const recipesDB = await recipe.map(data =>{
-     return {
-         id: data.id,
-         name: data.title,
-         image: data.image,
-         healthScore: data.healthScore,
-         summary: data.summary,
-         steps: data.steps,
-         createInDb: true,
-         diets: data.diets.map(diet=> diet.name)
-     }
- })
- return recipesDB
-};
-
-//TRAIGO TODOS LOS RECIPES, TANTO DE LA API COMO DE LA DB.
-const getAllInfo = async () => {
-  const apiInfo = await getApiInfo()
-  const dbInfo = await getDBInfo()
-  const allInfo = apiInfo.concat(dbInfo)
-  return allInfo
+function createRecipe(req, res, next) {
+	const { title, summary, score, healthScore, instructions, diets } = req.body;
+	Recipe.create({
+		title,
+		image: '',
+		summary,
+		score: parseFloat(score),
+		healthScore: parseFloat(healthScore),
+		instructions,
+	})
+		.then((recipeCreated) => {
+			return recipeCreated.setDiets(diets);
+		})
+		.then(newRecipe => {
+			return res.json({
+				message: 'Recipe created successfully',
+			});
+		})
+		.catch((error) => next(error));
 }
 
 module.exports = {
-  getApiInfo,
-  getDBInfo,
-  getAllInfo,
-}
-
-
-
-
-
-
-
-
+	getRecipeByName,
+	getRecipeById,
+	createRecipe,
+};
 
 
 // GET /recipes/:idRecipe
