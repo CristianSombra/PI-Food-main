@@ -12,7 +12,7 @@ const router = Router();
 router.use('/recipes', recipesRouter);
 
 
-// router.post('/recipes', createRecipe);
+// router.post('/recipes', recipesRouter);
 // router.get('/diets', getDiets);
 
 
