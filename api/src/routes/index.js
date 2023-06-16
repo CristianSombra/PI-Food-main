@@ -2,10 +2,12 @@ const { Router } = require('express');
 const router = Router();
 
 const { getRecipeByName, getRecipeById, createRecipe } = require('../controllers/recipe');
+const { getDiets } = require('../controllers/diet')
 
 router.get('/recipes', getRecipeByName);
 router.get('/recipes/:idReceta', getRecipeById);
 router.post('/recipe', createRecipe);
+router.get('/diets', getDiets);
 
 module.exports = router;
 

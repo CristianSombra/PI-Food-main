@@ -10,7 +10,7 @@ function getRecipeByName(req, res, next) {
 	if (nameQuery) {
 	  axios
 		.get(
-		  `https://api.spoonacular.com/recipes/complexSearch?apiKey=${API_KEY}&addRecipeInformation=true&query=${nameQuery}&number=100`
+		  `https://api.spoonacular.com/recipes/complexSearch?apiKey=${API_KEY}&addRecipeInformation=true&query=${nameQuery}`
 		)
 		.then((apiResponse) => {
 		  remoteRecipes = apiResponse.data.results.filter((recipe) => {
@@ -46,7 +46,7 @@ function getRecipeByName(req, res, next) {
 	} else {
 	  axios
 		.get(
-		  `https://api.spoonacular.com/recipes/complexSearch?apiKey=${API_KEY}&addRecipeInformation=true&number=100`
+		  `https://api.spoonacular.com/recipes/complexSearch?apiKey=${API_KEY}&addRecipeInformation=true`
 		)
 		.then((apiResponse) => {
 		  remoteRecipes = apiResponse.data.results.map((recipe) => {
