@@ -101,26 +101,23 @@ function getRecipeById(req, res, next) {
 	}
 }
 
-function createRecipe(req, res, next) {
-	const { title, summary, score, healthScore, instructions, diets } = req.body;
-	Recipe.create({
-		title,
-		image: '',
+async function createRecipe(req, res) {
+	const { name, image, summary, healthScore, steps, diet } = req.body;
+	const recipeCreated = await Recipe.create({
+		name,
+		image,
 		summary,
-		score: parseFloat(score),
-		healthScore: parseFloat(healthScore),
-		instructions,
+		healthScore,
+		steps,
 	})
-		.then((recipeCreated) => {
-			return recipeCreated.setDiets(diets);
-		})
-		.then(newRecipe => {
-			return res.json({
-				message: 'Recipe created successfully',
-			});
-		})
-		.catch((error) => next(error));
-}
+		
+	const dietDB = await Diet.findAll({
+		where: { name: diet }
+	})
+	recipeCreated.addDiet(dietDB)
+	res.send('Recipe created successfully')
+};
+
 
 module.exports = {
 	getRecipeByName,
