@@ -1,82 +1,61 @@
 require('dotenv').config();
+const { API_KEY } = process.env;
 const { Recipe, Diet } = require('../db.js');
 const axios = require('axios');
-const { API_KEY } = process.env;
+const { Op } = require('sequelize');
 
 function getRecipeByName(req, res, next) {
 	const nameQuery = req.query.name;
 	var remoteRecipes = [];
 	var localRecipes = [];
-	if (nameQuery) {
-	  axios
-		.get(
-		  `https://api.spoonacular.com/recipes/complexSearch?apiKey=${API_KEY}&addRecipeInformation=true&query=${nameQuery}`
-		)
-		.then((apiResponse) => {
-		  remoteRecipes = apiResponse.data.results.filter((recipe) => {
-			return recipe.title.toLowerCase().includes(nameQuery);
-		  }).map((recipe) => {
-			return {
-			  id: recipe.id,
-			  name: recipe.title,
-			  image: recipe.image,
-			  summary: recipe.summary,
-			  healthScore: recipe.healthScore,
-			  steps: recipe.analyzedInstructions[0]?.steps.map(step => step.step),
-			};
-		  });
-		  return Recipe.findAll({ include: [Diet] });
-		})
-		.then((localResponse) => {
-		  localRecipes = localResponse.filter((recipe) => {
-			return recipe.title.toLowerCase().includes(nameQuery);
-		  }).map((recipe) => {
-			return {
-			  id: recipe.id,
-			  name: recipe.title,
-			  image: recipe.image,
-			  summary: recipe.summary,
-			  healthScore: recipe.healthScore,
-			  steps: recipe.steps
-			};
-		  });
-		  return res.json([...localRecipes, ...remoteRecipes].slice(0, 9));
-		})
-		.catch((error) => next(error));
-	} else {
-	  axios
-		.get(
-		  `https://api.spoonacular.com/recipes/complexSearch?apiKey=${API_KEY}&addRecipeInformation=true`
-		)
-		.then((apiResponse) => {
-		  remoteRecipes = apiResponse.data.results.map((recipe) => {
-			return {
-			  id: recipe.id,
-			  name: recipe.title,
-			  image: recipe.image,
-			  summary: recipe.summary,
-			  healthScore: recipe.healthScore,
-			  steps: recipe.analyzedInstructions[0]?.steps.map(step => step.step),
-			};
-		  });
-		  return Recipe.findAll({ include: [Diet] });
-		})
-		.then((localResponse) => {
-		  localRecipes = localResponse.map((recipe) => {
-			return {
-			  id: recipe.id,
-			  name: recipe.title,
-			  image: recipe.image,
-			  summary: recipe.summary,
-			  healthScore: recipe.healthScore,
-			  steps: recipe.steps
-			};
-		  });
-		  return res.json([...localRecipes, ...remoteRecipes]);
-		})
-		.catch((error) => next(error));
+  
+	if (!nameQuery) {
+	  return res.status(400).json({ error: 'La búsqueda no puede estar vacía' });
 	}
+  
+	axios
+	  .get(`https://api.spoonacular.com/recipes/complexSearch?apiKey=${API_KEY}&addRecipeInformation=true&query=${nameQuery}`)
+	  .then((apiResponse) => {
+		remoteRecipes = apiResponse.data.results.filter((recipe) => {
+		  return recipe.title.toLowerCase().includes(nameQuery);
+		}).map((recipe) => {
+		  return {
+			id: recipe.id,
+			name: recipe.title,
+			image: recipe.image,
+			summary: recipe.summary,
+			healthScore: recipe.healthScore,
+			steps: recipe.analyzedInstructions[0]?.steps.map(step => step.step),
+			diets: recipe.diets
+		  };
+		});
+		return Recipe.findAll({ include: [Diet], where: { name: { [Op.iLike]: `%${nameQuery}%` } } });
+	  })
+	  .then((localResponse) => {
+		localRecipes = localResponse.map((recipe) => {
+		  return {
+			id: recipe.id,
+			name: recipe.name,
+			image: recipe.image,
+			summary: recipe.summary,
+			healthScore: recipe.healthScore,
+			steps: recipe.steps,
+			diets: recipe.diets
+		  };
+		});
+  
+		const combinedRecipes = [...localRecipes, ...remoteRecipes].slice(0, 9);
+  
+		if (combinedRecipes.length === 0) {
+		  return res.status(404).json({ message: "No se encontró la receta solicitada." });
+		} else {
+		  return res.json(combinedRecipes);
+		}
+	  })
+	  .catch((error) => next(error));
   }
+  
+  
 
 function getRecipeById(req, res, next) {
 	const id = req.params.idReceta;
@@ -95,6 +74,7 @@ function getRecipeById(req, res, next) {
 					summary: response.data.summary,
 					healthScore: response.data.healthScore,
 					steps: response.data.instructions,
+					diets: response.data.diets
 				});
 			})
 			.catch((error) => next(error));
@@ -102,7 +82,7 @@ function getRecipeById(req, res, next) {
 }
 
 async function createRecipe(req, res) {
-	const { name, image, summary, healthScore, steps, diet } = req.body;
+	const { name, image, summary, healthScore, steps } = req.body;
 	const recipeCreated = await Recipe.create({
 		name,
 		image,
@@ -110,11 +90,11 @@ async function createRecipe(req, res) {
 		healthScore,
 		steps,
 	})
-		
-	const dietDB = await Diet.findAll({
-		where: { name: diet }
-	})
-	recipeCreated.addDiet(dietDB)
+	console.log(recipeCreated);
+	// const dietDB = await Diet.findAll({
+	// 	where: { name: diet }
+	// })
+	// recipeCreated.addDiet(dietDB)
 	res.send('Recipe created successfully')
 };
 
