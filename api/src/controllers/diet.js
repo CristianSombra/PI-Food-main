@@ -7,7 +7,6 @@ async function getDiets(req, res) {
   try {
     const dietsApi = await axios.get(`https://api.spoonacular.com/recipes/complexSearch?apiKey=${API_KEY}&addRecipeInformation=true`);
     const diets = dietsApi.data.results.map((el) => el.diets || []).flat();
-    // console.log(diets);
     
     const uniqueDietNames = [...new Set(diets)];
     const sortedUniqueDietNames = uniqueDietNames.sort((a, b) => a.localeCompare(b, 'en', { sensitivity: 'base' }));
@@ -27,6 +26,7 @@ async function getDiets(req, res) {
     res.status(500).send('Internal Server Error');
   }
 }
+
 
 
 module.exports = { getDiets };
