@@ -16,7 +16,7 @@ function getRecipeByName(req, res, next) {
 	  .get(`https://api.spoonacular.com/recipes/complexSearch?apiKey=${API_KEY}&addRecipeInformation=true&query=${nameQuery}`)
 	  .then((apiResponse) => {
 		remoteRecipes = apiResponse.data.results.filter((recipe) => {
-			return recipe.title.toLowerCase().indexOf(nameQuery.toLowerCase()) !== -1;
+		  return recipe.title.toLowerCase().indexOf(nameQuery.toLowerCase()) !== -1;
 		}).map((recipe) => {
 		  return {
 			id: recipe.id,
@@ -28,7 +28,17 @@ function getRecipeByName(req, res, next) {
 			diets: recipe.diets
 		  };
 		});
-		return Recipe.findAll({ include: [Diet], where: { name: { [Op.iLike]: `%${nameQuery}%` } } });
+		return Recipe.findAll({
+		  where: { name: { [Op.iLike]: `%${nameQuery}%` } },
+		  attributes: ['id', 'name', 'image', 'summary', 'healthScore', 'steps'],
+		  include: [
+			{
+			  model: Diet,
+			  attributes: ['name'],
+			  through: { attributes: [] } // Opcional, para excluir los atributos adicionales de la relación
+			}
+		  ]
+		});
 	  })
 	  .then((localResponse) => {
 		localRecipes = localResponse.map((recipe) => {
@@ -52,32 +62,46 @@ function getRecipeByName(req, res, next) {
 		}
 	  })
 	  .catch((error) => next(error));
-}
- 
+  }
+  
 
-function getRecipeById(req, res, next) {
+  function getRecipeById(req, res, next) {
 	const id = req.params.idReceta;
 	if (id.includes('-')) {
-		Recipe.findByPk(id, { include: Diet }).then((recipe) => {
-			return res.json(recipe);
+	  Recipe.findByPk(id, { include: Diet }).then((recipe) => {
+		// Filtrar solo el atributo "name" de las dietas
+		const filteredDiets = recipe.diets.map((diet) => ({
+		  name: diet.name
+		}));
+  
+		return res.json({
+		  id: recipe.id,
+		  name: recipe.name,
+		  image: recipe.image,
+		  summary: recipe.summary,
+		  healthScore: recipe.healthScore,
+		  steps: recipe.steps,
+		  diets: filteredDiets
 		});
+	  });
 	} else {
-		axios
-			.get(`https://api.spoonacular.com/recipes/${id}/information?apiKey=${API_KEY}`)
-			.then((response) => {
-				return res.json({
-					id: response.data.id,
-					name: response.data.title,
-					image: response.data.image,
-					summary: response.data.summary,
-					healthScore: response.data.healthScore,
-					steps: response.data.instructions,
-					diets: response.data.diets
-				});
-			})
-			.catch((error) => next(error));
+	  axios
+		.get(`https://api.spoonacular.com/recipes/${id}/information?apiKey=${API_KEY}`)
+		.then((response) => {
+		  return res.json({
+			id: response.data.id,
+			name: response.data.title,
+			image: response.data.image,
+			summary: response.data.summary,
+			healthScore: response.data.healthScore,
+			steps: response.data.instructions,
+			diets: response.data.diets
+		  });
+		})
+		.catch((error) => next(error));
 	}
-}
+  }
+  
 
 async function createRecipe(req, res) {
 	const { name, image, summary, healthScore, steps, diets } = req.body;
