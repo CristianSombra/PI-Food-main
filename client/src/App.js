@@ -1,5 +1,5 @@
 import './App.css';
-import { Route, useLocation, Switch } from "react-router-dom";
+import { Route, useLocation } from "react-router-dom";
 import { Home, Landing, Detail, Form } from "./views";
 import NavBar from './components/navbar/navbar';
 
