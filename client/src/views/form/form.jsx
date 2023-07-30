@@ -1,9 +1,31 @@
 const form = () => {
     return(
-        <>
-            <h1>Esta es la seccion de Form</h1>
-
-        </>
+        <form>
+            <div>
+                <label>
+                
+                </label>
+                <input>
+                
+                </input>
+            </div>
+            <div>
+                <label>
+                
+                </label>
+                <input>
+                
+                </input>
+            </div>
+            <div>
+                <label>
+                
+                </label>
+                <input>
+                
+                </input>
+            </div>
+        </form>
     )
 };
 
